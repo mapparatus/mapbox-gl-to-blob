@@ -1,0 +1,41 @@
+{
+  "name": "mapbox-gl-to-blob",
+  "version": "0.0.0",
+  "description": "Render mapbox-gl styles as rasters",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint lib && eslint index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orangemug/mapbox-gl-to-blob.git"
+  },
+  "keywords": [
+    "mapbox",
+    "gis",
+    "vector",
+    "gl"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/orangemug/mapbox-gl-to-blob/issues"
+  },
+  "peerDependencies": {
+    "mapbox-gl": ">0.44.1"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "sourceType": "module"
+    },
+    "env": {
+      "browser": true
+    },
+    "extends": "mourner",
+    "rules": {
+      "indent": [
+        2,
+        2
+      ]
+    }
+  }
+}
