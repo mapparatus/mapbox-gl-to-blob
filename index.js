@@ -52,7 +52,7 @@ function toPixels(length, unit) {
  *
  * @returns {Blob}
  */
-function toBlob(opts, mimeType, qualityArgument) {
+var toBlob = function fn(opts, mimeType, qualityArgument) {
   // HACK: Massive hack to get a unique function name we can grep for in a stack trace.
   Object.defineProperty(fn, 'name', { writable: true });
   var uniqueKey = "mapboxGlToBlob_"+Math.random().toString(36).substr(2, 9);
@@ -72,7 +72,7 @@ function toBlob(opts, mimeType, qualityArgument) {
     // Calculate pixel ratio
     var actualPixelRatio = window.devicePixelRatio;
     Object.defineProperty(window, 'devicePixelRatio', {
-			get: function fn() {
+			get: function() {
         // HACK: We throw an error so we can see if we (this library)
         // is in the stack trace. This means that `window.devicePixelRatio`
         // will continue to function as normal in other code running on the
@@ -107,14 +107,15 @@ function toBlob(opts, mimeType, qualityArgument) {
     hidden.appendChild(container);
 
     var map = new MapboxGl.Map({
-			attributionControl: false,
 			bearing:     glOpts.bearing,
 			center:      glOpts.center,
 			container:   container,
-			interactive: false,
 			pitch:       glOpts.pitch,
 			style:       glOpts.style,
-			zoom:        glOpts.zoom
+			zoom:        glOpts.zoom,
+			attributionControl: false,
+			interactive: false,
+      preserveDrawingBuffer: true
     });
 
     function cleanUp() {
