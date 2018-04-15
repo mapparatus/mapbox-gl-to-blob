@@ -25,13 +25,13 @@ npm install orangemug/mapbox-gl-to-blob
 Example usage shown below
 
 ```js
-const mapboxGlToBlob = require("./mapbox-gl-to-blob");
+const mapboxGlToBlob = require("mapbox-gl-to-blob");
 
 const opts = {
   // See <https://www.mapbox.com/mapbox-gl-js/api/#map> for usage
   mapboxGl: {
     // Required arguments
-    style: "https://rawgit.com/lukasmartinelli/osm-liberty/gh-pages/style.json"
+    style: "https://rawgit.com/lukasmartinelli/osm-liberty/gh-pages/style.json",
     // Optional arguments (showing defaults)
     pitch: 0,
     zoom: 0,
