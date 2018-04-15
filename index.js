@@ -1,4 +1,6 @@
 var MapboxGl = require('mapbox-gl');
+var styleSpec = require("mapbox-gl/src/style-spec/reference/v8.json");
+
 
 /**
  * Util
@@ -69,78 +71,132 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
   }, opts.mapboxGl);
 
 	return new Promise(function(resolve, reject) {
-    // Calculate pixel ratio
-    var actualPixelRatio = window.devicePixelRatio;
-    Object.defineProperty(window, 'devicePixelRatio', {
-			get: function() {
-        // HACK: We throw an error so we can see if we (this library)
-        // is in the stack trace. This means that `window.devicePixelRatio`
-        // will continue to function as normal in other code running on the
-        // page. 
-        try {
-          throw new Error();
-        }
-        catch (e) { 
-          if(e.stack.indexOf(uniqueKey)) {
-            return outOpts.dpi / 96;
-          }
-          else {
-            return actualPixelRatio;
-          }
-        }
+
+    function removeAllTransitions(style) {
+      // Global transition
+      style.transition = {
+        "duration": 0,
+        "delay": 0
       }
-    });
 
-    // Hidden map container
-    var hidden = createElement("div", {
-      overflow: "hidden",
-      width: "0px",
-      height: "0px"
-    })
-    document.body.appendChild(hidden);
+      // Paint specific transitions
+      style.layers.forEach(function(layer) {
+        var layerKey = "paint_"+layer.type;
+        Object.keys(styleSpec[layerKey]).forEach(function(key) {
+          if(styleSpec[layerKey][key].transition) {
+            layer.paint[key+"-transition"] = {
+              "duration": 0,
+              "delay": 0
+            }
+          }
+        })
+      })
 
-    // Actual map container with dimensions set, ready for raster render
-    var container = createElement("div", {
-      width:  toPixels(outOpts.dimensions.width, outOpts.dimensions.unit),
-      height: toPixels(outOpts.dimensions.height, outOpts.dimensions.unit)
-    });
-    hidden.appendChild(container);
-
-    var map = new MapboxGl.Map({
-			bearing:     glOpts.bearing,
-			center:      glOpts.center,
-			container:   container,
-			pitch:       glOpts.pitch,
-			style:       glOpts.style,
-			zoom:        glOpts.zoom,
-			attributionControl: false,
-			interactive: false,
-      preserveDrawingBuffer: true
-    });
-
-    function cleanUp() {
-      map.remove();
-      removeEl(hidden);
-      Object.defineProperty(window, 'devicePixelRatio', {
-        get: function() {
-          return actualPixelRatio
-        }
-      });
+      return style;
     }
 
-    function onMapLoad() {
-      try {
-        map.getCanvas().toBlob(function(blob) {
-          cleanUp();
-          resolve(blob);
-        }, mimeType, qualityArgument);
-      } catch(err) {
-        cleanUp();
-        reject(err);
-      }
+    function loadStyle(style) {
+      return new Promise(function(resolve, reject) {
+        if(typeof(style) === "string") {
+          fetch(style)
+            .then(function(response) {
+              return response.json()
+            })
+            .then(function(style) {
+              resolve(style);
+            })
+        }
+        else {
+          resolve(style);
+        }
+      })
     }
 
-    map.once('load', onMapLoad);
+    loadStyle(opts.mapboxGl.style)
+      .then(function(style) {
+        return removeAllTransitions(style)
+      })
+      .then(function(style) {
+        // Calculate pixel ratio
+        var actualPixelRatio = window.devicePixelRatio;
+        Object.defineProperty(window, 'devicePixelRatio', {
+          get: function() {
+            // HACK: We throw an error so we can see if we (this library)
+            // is in the stack trace. This means that `window.devicePixelRatio`
+            // will continue to function as normal in other code running on the
+            // page. 
+            try {
+              throw new Error();
+            }
+            catch (e) { 
+              if(e.stack.indexOf(uniqueKey)) {
+                return outOpts.dpi / 96;
+              }
+              else {
+                return actualPixelRatio;
+              }
+            }
+          }
+        });
+
+        // Hidden map container
+        var hidden = createElement("div", {
+          overflow: "hidden",
+          width: "0px",
+          height: "0px"
+        })
+        document.body.appendChild(hidden);
+
+        // Actual map container with dimensions set, ready for raster render
+        var container = createElement("div", {
+          width:  toPixels(outOpts.dimensions.width, outOpts.dimensions.unit),
+          height: toPixels(outOpts.dimensions.height, outOpts.dimensions.unit)
+        });
+        hidden.appendChild(container);
+
+        var map = new MapboxGl.Map({
+          bearing:     glOpts.bearing,
+          center:      glOpts.center,
+          container:   container,
+          pitch:       glOpts.pitch,
+          style:       style,
+          zoom:        glOpts.zoom,
+          attributionControl: false,
+          interactive: true,
+          preserveDrawingBuffer: true
+        });
+
+        function cleanUp() {
+          map.remove();
+          removeEl(hidden);
+          Object.defineProperty(window, 'devicePixelRatio', {
+            get: function() {
+              return actualPixelRatio
+            }
+          });
+        }
+
+        function onMapLoad() {
+          try {
+            /*
+             * We need to wait a period of time before the map is actually
+             * ready. This seems to be a bug with mapbox-gl not dealing with
+             * transition durations correctly.
+             */
+            setTimeout(function() {
+              map.getCanvas().toBlob(function(blob) {
+                cleanUp();
+                resolve(blob);
+              }, mimeType, qualityArgument);
+            }, 1000)
+          } catch(err) {
+            cleanUp();
+            reject(err);
+          }
+        }
+
+        map.once('load', onMapLoad);
+      })
   });
 }
 
