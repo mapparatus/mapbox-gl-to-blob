@@ -4,7 +4,7 @@
   "description": "Render mapbox-gl styles as rasters",
   "main": "index.js",
   "scripts": {
-    "test": "eslint lib && eslint index.js"
+    "examples": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
@@ -37,5 +37,11 @@
         2
       ]
     }
+  },
+  "devDependencies": {
+    "mapbox-gl": "^0.44.2",
+    "webpack": "^4.5.0",
+    "webpack-cli": "^2.0.14",
+    "webpack-dev-server": "^3.1.3"
   }
 }

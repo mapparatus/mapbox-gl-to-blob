@@ -56,6 +56,20 @@ mapboxGlToBlob
 ```
 
 
+
+## Development
+Currently the best way to develop this library is via the [./examples](/examples)
+
+To start the examples just run
+
+```
+npm run examples
+```
+
+..and go to <http://localhost:8081/example/>
+
+
+
 ## Browser support
 Although at the moment somewhat untested, it should work in all modern browsers. With the exception of IE which will require a polyfill, see
 
