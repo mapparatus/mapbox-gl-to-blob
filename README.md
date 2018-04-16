@@ -66,7 +66,7 @@ To start the examples just run
 npm run examples
 ```
 
-..and go to <http://localhost:8081/example/>
+..and go to url printed in the terminal.
 
 
 
