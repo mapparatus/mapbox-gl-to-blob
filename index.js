@@ -202,5 +202,6 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
 
 
 module.exports = {
-  toBlob: toBlob
+  toBlob: toBlob,
+  toPixels: toPixels
 };
