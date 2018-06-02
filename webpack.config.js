@@ -5,5 +5,8 @@ module.exports = {
   output: {
 		path: path.resolve(__dirname, 'dist'),
     filename: './example/app.bundle.js'
+  },
+  optimization: {
+    minimize: false
   }
 };

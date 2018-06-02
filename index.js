@@ -1,5 +1,6 @@
 var MapboxGl = require('mapbox-gl');
 var styleSpec = require("mapbox-gl/src/style-spec/reference/v8.json");
+var debounce = require("lodash.debounce");
 
 
 /**
@@ -162,7 +163,8 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           style:       style,
           zoom:        glOpts.zoom,
           attributionControl: false,
-          interactive: true,
+          interactive: false,
+          trackResize: false,
           preserveDrawingBuffer: true,
           fadeDuration: 0,
         });
@@ -177,26 +179,31 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           });
         }
 
-        function onMapLoad() {
+        var called = false;
+        function onMapRendered() {
+          if(called) {
+            return;
+          }
+          called = true;
           try {
-            /*
-             * We need to wait a period of time before the map is actually
-             * ready. This seems to be a bug with mapbox-gl not dealing with
-             * transition durations correctly.
-             */
-            setTimeout(function() {
-              map.getCanvas().toBlob(function(blob) {
-                cleanUp();
-                resolve(blob);
-              }, mimeType, qualityArgument);
-            }, 1000)
+            map.getCanvas().toBlob(function(blob) {
+              cleanUp();
+              resolve(blob);
+            }, mimeType, qualityArgument);
           } catch(err) {
             cleanUp();
             reject(err);
           }
         }
 
-        map.once('load', onMapLoad);
+        map.once('load', function() {
+          /**
+           * While mapbox-gl-js is doing layout we appear to get multiple 'render' events after the 'load' event. Assuming all the loading has happened already we debounce our onMapRendered method by 1 second to allow all render events to take place.
+           *
+           * This is a bit of a hack, however the theroy is that a 1 second debounce should be vastly greater than the length of time it'll take to complete this action.
+           */
+          map.on('render', debounce(onMapRendered, 1000))
+        });
       })
   });
 }
