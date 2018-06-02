@@ -163,7 +163,8 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           zoom:        glOpts.zoom,
           attributionControl: false,
           interactive: true,
-          preserveDrawingBuffer: true
+          preserveDrawingBuffer: true,
+          fadeDuration: 0,
         });
 
         function cleanUp() {
