@@ -182,6 +182,10 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
 
         var called = false;
         function onMapRendered() {
+          // Always wait for loaded event
+          if(!loaded) {
+            return;
+          }
           if(called) {
             return;
           }
@@ -197,13 +201,18 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           }
         }
 
+        /**
+         * While mapbox-gl-js is doing layout we appear to get multiple 'render' events after the 'load' event. Assuming all the loading has happened already we debounce our onMapRendered method by 1 second to allow all render events to take place.
+         *
+         * This is a bit of a hack, however the theroy is that a 1 second debounce should be vastly greater than the length of time it'll take to complete this action.
+         */
+        const debouncedRender = debounce(onMapRendered, 1000);
+        map.on('render', debouncedRender);
+
         map.once('load', function() {
-          /**
-           * While mapbox-gl-js is doing layout we appear to get multiple 'render' events after the 'load' event. Assuming all the loading has happened already we debounce our onMapRendered method by 1 second to allow all render events to take place.
-           *
-           * This is a bit of a hack, however the theroy is that a 1 second debounce should be vastly greater than the length of time it'll take to complete this action.
-           */
-          map.on('render', debounce(onMapRendered, 1000))
+          loaded = true;
+          // We may or may not get another render event.
+          debouncedRender();
         });
       })
   });
