@@ -85,6 +85,7 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
         var layerKey = "paint_"+layer.type;
         Object.keys(styleSpec[layerKey]).forEach(function(key) {
           if(styleSpec[layerKey][key].transition) {
+            layer.paint = layer.paint || {};
             layer.paint[key+"-transition"] = {
               "duration": 0,
               "delay": 0
