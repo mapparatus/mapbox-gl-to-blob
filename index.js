@@ -1,6 +1,7 @@
 var MapboxGl = require('mapbox-gl');
 var styleSpec = require("mapbox-gl/src/style-spec/reference/v8.json");
 var debounce = require("lodash.debounce");
+var PCancelable = require('p-cancelable');
 
 
 /**
@@ -17,7 +18,9 @@ function createElement(tagName, style) {
 }
 
 function removeEl(el) {
-  el.parentNode.removeChild(el);
+  if(el.parentNode) {
+    el.parentNode.removeChild(el);
+  }
 }
 
 function toPixels(length, unit) {
@@ -71,7 +74,7 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
     bearing: 0
   }, opts.mapboxGl);
 
-	return new Promise(function(resolve, reject) {
+	var promise = new PCancelable(function(resolve, reject, onCancel) {
 
     function removeAllTransitions(style) {
       // Global transition
@@ -119,6 +122,11 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
         return removeAllTransitions(style)
       })
       .then(function(style) {
+        if(promise.isCanceled) {
+          // Early exit
+          return;
+        }
+
         // Calculate pixel ratio
         var actualPixelRatio = window.devicePixelRatio;
         Object.defineProperty(window, 'devicePixelRatio', {
@@ -170,16 +178,6 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           fadeDuration: 0,
         });
 
-        function cleanUp() {
-          map.remove();
-          removeEl(hidden);
-          Object.defineProperty(window, 'devicePixelRatio', {
-            get: function() {
-              return actualPixelRatio
-            }
-          });
-        }
-
         var called = false;
         function onMapRendered() {
           // Always wait for loaded event
@@ -207,6 +205,22 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
          * This is a bit of a hack, however the theroy is that a 1 second debounce should be vastly greater than the length of time it'll take to complete this action.
          */
         const debouncedRender = debounce(onMapRendered, 1000);
+
+        function cleanUp() {
+          map.remove();
+          removeEl(hidden);
+          debouncedRender.cancel();
+          Object.defineProperty(window, 'devicePixelRatio', {
+            get: function() {
+              return actualPixelRatio
+            }
+          });
+        }
+
+        onCancel(() => {
+          cleanUp();
+        })
+
         map.on('render', debouncedRender);
 
         map.once('load', function() {
@@ -216,6 +230,8 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
         });
       })
   });
+
+  return promise;
 }
 
 
