@@ -1,6 +1,5 @@
 var MapboxGl = require('mapbox-gl');
 var styleSpec = require("mapbox-gl/src/style-spec/reference/v8.json");
-var debounce = require("lodash.debounce");
 var PCancelable = require('p-cancelable');
 
 
