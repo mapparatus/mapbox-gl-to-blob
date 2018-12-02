@@ -63,7 +63,7 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
   Object.defineProperty(fn, 'name', { writable: true });
   var uniqueKey = "mapboxGlToBlob_"+Math.random().toString(36).substr(2, 9);
   fn.name = uniqueKey;
-  
+
   // Copy opts for safety
   var outOpts = opts.output;
   var glOpts = Object.assign({
@@ -134,11 +134,11 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
             // HACK: We throw an error so we can see if we (this library)
             // is in the stack trace. This means that `window.devicePixelRatio`
             // will continue to function as normal in other code running on the
-            // page. 
+            // page.
             try {
               throw new Error();
             }
-            catch (e) { 
+            catch (e) {
               if(e.stack.indexOf(uniqueKey)) {
                 return outOpts.dpi / 96;
               }
@@ -180,10 +180,6 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
 
         var called = false;
         function onMapRendered() {
-          // Always wait for loaded event
-          if(!loaded) {
-            return;
-          }
           if(called) {
             return;
           }
@@ -199,17 +195,9 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           }
         }
 
-        /**
-         * While mapbox-gl-js is doing layout we appear to get multiple 'render' events after the 'load' event. Assuming all the loading has happened already we debounce our onMapRendered method by 1 second to allow all render events to take place.
-         *
-         * This is a bit of a hack, however the theroy is that a 1 second debounce should be vastly greater than the length of time it'll take to complete this action.
-         */
-        const debouncedRender = debounce(onMapRendered, 1000);
-
         function cleanUp() {
           map.remove();
           removeEl(hidden);
-          debouncedRender.cancel();
           Object.defineProperty(window, 'devicePixelRatio', {
             get: function() {
               return actualPixelRatio
@@ -221,13 +209,7 @@ var toBlob = function fn(opts, mimeType, qualityArgument) {
           cleanUp();
         })
 
-        map.on('render', debouncedRender);
-
-        map.once('load', function() {
-          loaded = true;
-          // We may or may not get another render event.
-          debouncedRender();
-        });
+        map.once('idle', onMapRendered);
       })
   });
 
@@ -239,3 +221,4 @@ module.exports = {
   toBlob: toBlob,
   toPixels: toPixels
 };
+
