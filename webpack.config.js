@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  mode: 'development',
   entry: './example/app.js',
   output: {
 		path: path.resolve(__dirname, 'dist'),
@@ -10,3 +11,4 @@ module.exports = {
     minimize: false
   }
 };
+
